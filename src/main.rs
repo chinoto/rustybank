@@ -32,21 +32,18 @@ fn disburse_random(accounts: &[Arc<Mutex<i64>>]) {
 }
 
 fn main() {
-    let mut accounts = vec![];
-    let mut threads = vec![];
+    let accounts: Vec<_> = (0..N_ACCTS)
+        .map(|_| Arc::new(Mutex::new(10i64)))
+        .collect();
 
-    for _ in 0..N_ACCTS {
-        accounts.push(Arc::new(Mutex::new(10i64)));
-    }
-
-    for _ in 0..N_THREADS {
-        threads.push({
+    let threads: Vec<_> = (0..N_THREADS)
+        .map(|_| {
             let accounts = accounts.clone();
             std::thread::spawn(move || for _ in 0..10000 {
                 disburse_random(&accounts);
             })
-        });
-    }
+        })
+        .collect();
     threads.into_iter().for_each(|t| { t.join().unwrap(); });
 
     let uaccounts = accounts.into_iter().map(|a| *a.lock().unwrap());
